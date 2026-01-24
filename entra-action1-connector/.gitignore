@@ -1,0 +1,37 @@
+node_modules/
+logs/
+*.log
+.env
+scripts/test*.js
+
+.env
+
+# Dependencies
+node_modules/
+
+# Runtime artifacts
+logs/
+*.log
+
+# Local configs
+config.json
+config copy.json
+config.*.json.bak
+*.bak
+
+# Internal / local docs
+README_INTERNAL.md
+
+# MS Office temp files
+~$*.docx
+~$*.xlsx
+~$*.pptx
+~$*.docx
+
+
+
+
+
+# OS / editor
+.DS_Store
+Thumbs.db

@@ -1,0 +1,30 @@
+{
+  "action1": {
+    "apiBaseUrl": "<ACTION1_API_BASE_URL>",
+    "clientId": "<ACTION1_CLIENT_ID>",
+    "clientSecretRef": "actuion1:main"
+  },
+  "tenants": [
+    {
+      "name": "<ENTRA_TENANT_FRIENDLY_NAME>",
+      "tenantId": "<ENTRA_DIRECTORY_TENANT_ID>",
+      "clientId": "<ENTRA_APPLICATION_CLIENT_ID>",
+      "clientSecretRef": "entra:tenant-a",
+      "targets": [
+        {
+          "organizationIds": [
+            "<ACTION1_ORGANIZATION_ID_1>",
+            "<ACTION1_ORGANIZATION_ID_2>"
+          ],
+          "mappings": [
+            {"entraProperty": "memberOf", "action1CustomAttribute": "Entra Groups" },         
+            {"entraProperty": "deviceOwnership",  "action1CustomAttribute": "Entra Device Ownership" }
+          ]
+        }
+      ]
+    }
+  ],
+  "logging": {
+    "level": "info"
+  }
+}
