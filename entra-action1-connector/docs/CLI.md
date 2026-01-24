@@ -205,7 +205,10 @@ npm run config:org:unselect -- \
 
 **Resolve org names before removal:**
 ```bash
-npm run config:org:unselect -- --config ./config.json --tenant "ACME Main" --resolve-orgs
+npm run config:org:unselect -- \
+  --config ./config.json \
+  --tenant "ACME Main" \
+  --resolve-orgs
 ```
 
 ---
@@ -222,7 +225,10 @@ npm run config:org:add -- \
 
 **Add multiple:**
 ```bash
-npm run config:org:add -- --config ./config.json --tenant "ACME Main" --org-ids id1,id2,id3
+npm run config:org:add -- \
+  --config ./config.json \
+  --tenant "ACME Main" \
+  --org-ids id1,id2,id3
 ```
 
 ---
@@ -239,143 +245,158 @@ npm run config:org:remove -- \
 
 **Limit to a specific target scope:**
 ```bash
-npm run config:org:remove -- --config ./config.json --tenant "ACME Main" --org-id <id> --target-index 2
+npm run config:org:remove -- \
+  --config ./config.json \
+  --tenant "ACME Main" \
+  --org-id <id> \
+  --target-index 2
 ```
 
-Target Scopes: practical examples
+---
 
-A Target Scope (also called “scope” in CLI output) is one element of tenants[].targets[].
+## Target Scopes: Practical Examples
 
-Use --separate-target to create a new scope
+A **Target Scope** (also called "scope" in CLI output) is one element of `tenants[].targets[]`.
 
-Use --target-index N to add/remove orgs within an existing scope
+- Use `--separate-target` to create a new scope
+- Use `--target-index N` to add/remove orgs within an existing scope
 
-Example A — Create a new scope using interactive select
+---
 
-Create a new scope for tenant ACME Main and put selected orgs there:
+### Example A — Create a New Scope Using Interactive Select
 
+Create a new scope for tenant "ACME Main" and put selected orgs there:
+```bash
 npm run config:org:select -- \
   --config ./config.json \
   --tenant "ACME Main" \
   --separate-target
+```
 
+**Result:**
+- A new `targets[]` block is added
+- Selected org IDs go into that new scope
+- Default mappings are applied (from `DEFAULT_MAPPINGS`)
 
-Result:
+---
 
-A new targets[] block is added
-
-Selected org IDs go into that new scope
-
-Default mappings are applied (from DEFAULT_MAPPINGS)
-
-Example B — Add orgs to an existing scope
+### Example B — Add Orgs to an Existing Scope
 
 Add selected orgs to Scope #2 (existing) using interactive selection:
-
-npm run config:org:org:select -- \
-  --config ./config.json \
-  --tenant "ACME Main" \
-  --target-index 2
-
-
-If you omit both --separate-target and --target-index, the tool adds to Scope #1 (default behavior in config manager logic).
-
-(Если у тебя скрипт называется config:org:select, то конечно так:)
-
+```bash
 npm run config:org:select -- \
   --config ./config.json \
   --tenant "ACME Main" \
   --target-index 2
+```
 
-Example C — Create a new scope using manual org-add
+**Note:** If you omit both `--separate-target` and `--target-index`, the tool adds to Scope #1 (default behavior).
+```bash
+npm run config:org:select -- \
+  --config ./config.json \
+  --tenant "ACME Main"
+```
+
+---
+
+### Example C — Create a New Scope Using Manual org-add
 
 Create a new scope and add a single org ID:
-
+```bash
 npm run config:org:add -- \
   --config ./config.json \
   --tenant "ACME Main" \
   --org-id 7da22590-8db9-11f0-b7df-bd82ae1408bb \
   --separate-target
-
+```
 
 Create a new scope and add multiple org IDs:
-
+```bash
 npm run config:org:add -- \
   --config ./config.json \
   --tenant "ACME Main" \
   --org-ids id1,id2,id3 \
   --separate-target
+```
 
-Example D — Remove orgs from a specific scope (interactive)
+---
 
-org-unselect lets you remove orgs, and you can limit it to a scope with --target-index.
+### Example D — Remove Orgs from a Specific Scope (Interactive)
+
+`org-unselect` lets you remove orgs, and you can limit it to a scope with `--target-index`.
 
 Remove orgs only from Scope #2:
-
+```bash
 npm run config:org:unselect -- \
   --config ./config.json \
   --tenant "ACME Main" \
   --target-index 2
-
+```
 
 Resolve org names in the UI (recommended):
-
+```bash
 npm run config:org:unselect -- \
   --config ./config.json \
   --tenant "ACME Main" \
   --target-index 2 \
   --resolve-orgs
+```
 
-Example E — “Delete a scope” (what’s possible today)
+---
 
-There is no dedicated CLI command to delete a scope block (tenants[].targets[]) directly.
+### Example E — Delete a Scope (What's Possible Today)
 
-Recommended workflow:
+There is no dedicated CLI command to delete a scope block (`tenants[].targets[]`) directly.
 
-Remove all organizations from that scope:
+**Recommended workflow:**
 
+1. Remove all organizations from that scope:
+```bash
 npm run config:org:unselect -- \
   --config ./config.json \
   --tenant "ACME Main" \
   --target-index 2 \
   --resolve-orgs
+```
 
-
-Check config:
-
+2. Check config:
+```bash
 npm run config:show -- --config ./config.json
+```
 
-
-If Scope #2 is still present but empty, remove it manually from config.json:
-
-Open config.json
-
-Find the tenant → targets
-
-Delete the empty object like:
-
+3. If Scope #2 is still present but empty, remove it manually from `config.json`:
+   - Open `config.json`
+   - Find the tenant → `targets`
+   - Delete the empty object:
+```json
 {
   "organizationIds": [],
   "mappings": [...]
 }
+```
 
+**Note:** Depending on implementation of `removeOrgFromTenant()` in `configManager.js`, empty scopes may be removed automatically. If not, manual cleanup is safe and expected.
 
-Note: depending on implementation of removeOrgFromTenant() in configManager.js, empty scopes may be removed automatically. If not, manual cleanup is safe and expected.
+---
 
-Example F — Remove a single org ID from a scope (manual)
+### Example F — Remove a Single Org ID from a Scope (Manual)
 
 Remove one org ID from anywhere in tenant:
-
+```bash
 npm run config:org:remove -- \
   --config ./config.json \
   --tenant "ACME Main" \
   --org-id 7da22590-8db9-11f0-b7df-bd82ae1408bb
-
+```
 
 Remove one org ID only from Scope #2:
-
+```bash
 npm run config:org:remove -- \
   --config ./config.json \
   --tenant "ACME Main" \
   --org-id 7da22590-8db9-11f0-b7df-bd82ae1408bb \
   --target-index 2
+```
+
+---
+
