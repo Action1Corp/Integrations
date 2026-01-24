@@ -344,7 +344,7 @@ npm run config:org:unselect -- \
 
 ---
 
-### Example E — Delete a Scope (What's Possible Today)
+### Example E — Delete a Scope 
 
 There is no dedicated CLI command to delete a scope block (`tenants[].targets[]`) directly.
 
@@ -374,9 +374,6 @@ npm run config:show -- --config ./config.json
   "mappings": [...]
 }
 ```
-
-**Note:** Depending on implementation of `removeOrgFromTenant()` in `configManager.js`, empty scopes may be removed automatically. If not, manual cleanup is safe and expected.
-
 ---
 
 ### Example F — Remove a Single Org ID from a Scope (Manual)
