@@ -55,3 +55,5 @@ The connector is a Node.js–based application.
 
 This project is licensed under the Apache License, Version 2.0.
 See the LICENSE file for details.
+
+Published in Action1Corp/Integrations
