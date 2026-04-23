@@ -1,0 +1,35 @@
+{
+  "name": "entra-action1-connector",
+  "version": "1.0.0",
+  "license": "Apache-2.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js --config ./config.json --dry-run",
+    "apply": "node index.js --config ./config.json --apply",
+    "orgs": "node scripts/listAction1Organizations.js ./config.json --quiet",
+    "secrets:list": "node index.js secrets list",
+    "secrets:set": "node index.js secrets set",
+    "secrets:get": "node index.js secrets get",
+    "secrets:delete": "node index.js secrets delete",
+    "config:init": "node index.js config init --config ./config.json",
+    "config:show": "node index.js config show --config ./config.json",
+    "config:validate": "node index.js config validate --config ./config.json",
+    "config:action1:set": "node index.js config action1-set --config ./config.json",
+    "config:tenant:add": "node index.js config tenant-add --config ./config.json",
+    "config:tenant:list": "node index.js config tenant-list --config ./config.json",
+    "config:tenant:remove": "node index.js config tenant-remove --config ./config.json",
+    "config:org:add": "node index.js config org-add --config ./config.json",
+    "config:org:remove": "node index.js config org-remove --config ./config.json",
+    "config:org:select": "node index.js config org-select --config ./config.json",
+    "config:org:unselect": "node index.js config org-unselect --config ./config.json",
+    "config:show:resolve": "node index.js config show --config ./config.json --resolve-orgs"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^8.2.0",
+    "commander": "^14.0.2",
+    "keytar": "^7.9.0",
+    "node-fetch": "^3.0.0",
+    "picocolors": "^1.1.1"
+  }
+}
