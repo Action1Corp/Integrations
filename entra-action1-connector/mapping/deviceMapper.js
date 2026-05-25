@@ -1,6 +1,14 @@
 // mapping/deviceMapper.js (ESM)
 // Pure mapping logic: no HTTP, no Action1 writes.
 
+// Action1 Public Repository Material
+//
+// Use of this file is subject to TERMS_OF_USE.md (https://github.com/Action1Corp/PSAction1/blob/main/TERMS_OF_USE.md) in this repository.
+// Provided AS IS, without warranties.
+// Use at your own risk.
+// Review, test, and validate before production use.
+// © Action1 Corporation. All rights reserved.
+
 function normalizeName(str) {
   if (str === null || str === undefined) return '';
   return String(str).trim().toLowerCase();

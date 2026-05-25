@@ -7,6 +7,14 @@
 // - No secrets are written back to config.json
 // - Supports --quiet and --log-level flags for clean output
 
+// Action1 Public Repository Material
+//
+// Use of this file is subject to TERMS_OF_USE.md (https://github.com/Action1Corp/PSAction1/blob/main/TERMS_OF_USE.md) in this repository.
+// Provided AS IS, without warranties.
+// Use at your own risk.
+// Review, test, and validate before production use.
+// © Action1 Corporation. All rights reserved.
+
 import path from 'node:path';
 import process from 'node:process';
 
