@@ -2,6 +2,14 @@
 // Action1 API client using OAuth2 client credentials.
 // This module only talks to Action1 API. No mapping or sync logic here.
 
+// Action1 Public Repository Material
+//
+// Use of this file is subject to TERMS_OF_USE.md (https://github.com/Action1Corp/PSAction1/blob/main/TERMS_OF_USE.md) in this repository.
+// Provided AS IS, without warranties.
+// Use at your own risk.
+// Review, test, and validate before production use.
+// © Action1 Corporation. All rights reserved.
+
 const ACTION1_TOKEN_SAFETY_MARGIN_MS = 2 * 60 * 1000; // 2 minutes
 const ACTION1_FALLBACK_TOKEN_TTL_SEC = 300; // 5 minutes fallback when expires_in is missing/invalid
 const action1TokenState = new Map(); // key -> { accessToken, expiresAtMs }
