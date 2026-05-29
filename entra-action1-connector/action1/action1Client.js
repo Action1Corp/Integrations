@@ -2,16 +2,10 @@
 // Action1 API client using OAuth2 client credentials.
 // This module only talks to Action1 API. No mapping or sync logic here.
 
-// Action1 Public Repository Material
-//
-// Use of this file is subject to TERMS_OF_USE.md (https://github.com/Action1Corp/PSAction1/blob/main/TERMS_OF_USE.md) in this repository.
-// Provided AS IS, without warranties.
-// Use at your own risk.
-// Review, test, and validate before production use.
-// © Action1 Corporation. All rights reserved.
-
 const ACTION1_TOKEN_SAFETY_MARGIN_MS = 2 * 60 * 1000; // 2 minutes
 const ACTION1_FALLBACK_TOKEN_TTL_SEC = 300; // 5 minutes fallback when expires_in is missing/invalid
+const ACTION1_429_BACKOFF_BASE_MS = 8000;
+const ACTION1_429_BACKOFF_CAP_MS = 60000;
 const action1TokenState = new Map(); // key -> { accessToken, expiresAtMs }
 
 function joinUrl(baseUrl, path) {
@@ -44,6 +38,32 @@ async function readJson(res) {
   } catch {
     return { _raw: text };
   }
+}
+
+async function sleep(ms) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function parseRetryAfterMs(headers) {
+  const raw = headers?.get?.('retry-after');
+  if (!raw) return null;
+
+  const asNumber = Number(raw);
+  if (Number.isFinite(asNumber) && asNumber >= 0) {
+    return asNumber * 1000;
+  }
+
+  const asDateMs = Date.parse(raw);
+  if (Number.isFinite(asDateMs)) {
+    return Math.max(0, asDateMs - Date.now());
+  }
+
+  return null;
+}
+
+function backoffMsForConsecutive429(consecutive429Count) {
+  const exponent = Math.max(0, consecutive429Count - 1);
+  return Math.min(ACTION1_429_BACKOFF_CAP_MS, ACTION1_429_BACKOFF_BASE_MS * 2 ** exponent);
 }
 
 function requireAction1Config(action1) {
@@ -112,10 +132,44 @@ async function httpJson(url, { method = 'GET', headers = {}, body = undefined },
     const err = new Error(msg);
     err.status = res.status;
     err.data = data;
+    err.headers = res.headers;
     throw err;
   }
 
   return data;
+}
+
+async function httpJsonWith429Retry(url, request, logger, endpoint) {
+  let consecutive429Count = 0;
+  const method = request?.method || 'GET';
+
+  while (true) {
+    try {
+      const data = await httpJson(url, request, logger);
+      if (consecutive429Count > 0) {
+        logger?.info?.(
+          `[Action1] HTTP 429 retry succeeded endpoint=${endpoint} method=${method} attempt=${consecutive429Count + 1}`
+        );
+      }
+      // Successful Action1 response resets the consecutive 429 sequence.
+      consecutive429Count = 0;
+      return data;
+    } catch (err) {
+      if (err?.status !== 429) throw err;
+
+      consecutive429Count += 1;
+      const exponentialDelayMs = backoffMsForConsecutive429(consecutive429Count);
+      const retryAfterMs = parseRetryAfterMs(err?.headers);
+      const finalDelayMs = retryAfterMs ? Math.max(exponentialDelayMs, retryAfterMs) : exponentialDelayMs;
+
+      logger?.warn?.(
+        `[Action1] HTTP 429 received; backing off endpoint=${endpoint} method=${method} consecutive429=${consecutive429Count} delayMs=${finalDelayMs}` +
+          (retryAfterMs ? ` retryAfterMs=${retryAfterMs}` : '')
+      );
+
+      await sleep(finalDelayMs);
+    }
+  }
 }
 
 function bearerHeaders(token) {
@@ -134,7 +188,7 @@ async function acquireOAuthTokenMeta(action1, logger) {
   logger?.debug?.(`[Action1] Token request (safe): clientId=${action1.clientId} apiBaseUrl=${action1.apiBaseUrl}`);
 
   const t0 = nowMs();
-  const data = await httpJson(
+  const data = await httpJsonWith429Retry(
     url,
     {
       method: 'POST',
@@ -144,7 +198,8 @@ async function acquireOAuthTokenMeta(action1, logger) {
         client_secret: action1.clientSecret, // DO NOT LOG THIS
       },
     },
-    logger
+    logger,
+    'oauthToken'
   );
 
   logger?.debug?.(`[Action1] Token received in ${msSince(t0)}ms`);
@@ -207,7 +262,12 @@ async function httpJsonWithOAuth(action1, providedToken, request, logger, endpoi
   const headers = { ...bearerHeaders(token), ...(request?.headers || {}) };
 
   try {
-    return await httpJson(request.url, { method: request.method, headers, body: request.body }, logger);
+    return await httpJsonWith429Retry(
+      request.url,
+      { method: request.method, headers, body: request.body },
+      logger,
+      endpoint
+    );
   } catch (err) {
     if (err?.status !== 401) throw err;
 
@@ -219,10 +279,11 @@ async function httpJsonWithOAuth(action1, providedToken, request, logger, endpoi
 
     const retryHeaders = { ...bearerHeaders(refreshed.accessToken), ...(request?.headers || {}) };
     try {
-      return await httpJson(
+      return await httpJsonWith429Retry(
         request.url,
         { method: request.method, headers: retryHeaders, body: request.body },
-        logger
+        logger,
+        endpoint
       );
     } catch (retryErr) {
       logger?.info?.(
