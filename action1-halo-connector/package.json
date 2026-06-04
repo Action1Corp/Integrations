@@ -1,0 +1,10 @@
+{
+  "name": "action1-halo-connector",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Action1 to HaloPSA connector skeleton",
+  "scripts": {
+    "start": "node src/main.js",
+    "test": "node src/tests/run-contract-tests.js"
+  }
+}

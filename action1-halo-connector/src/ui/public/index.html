@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Action1 Connector for HaloPSA</title>
+    <link rel="stylesheet" href="/assets/styles.css" />
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <header class="topbar">
+        <div class="title-wrap">
+          <h1>Action1 Connector for HaloPSA</h1>
+          <p class="subtitle">
+            Configure API access, ticket routing, lifecycle rules, and organization mapping for the Action1 HaloPSA integration.
+          </p>
+        </div>
+        <div id="globalStatus" class="status info">Ready</div>
+      </header>
+
+      <nav class="tabs" id="tabs"></nav>
+
+      <main class="panel-shell">
+        <section id="tab-connection" class="tab-panel"></section>
+        <section id="tab-configuration" class="tab-panel hidden"></section>
+        <section id="tab-mapping" class="tab-panel hidden"></section>
+        <section id="tab-sync" class="tab-panel hidden"></section>
+      </main>
+    </div>
+
+    <script src="/assets/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,15 @@
+_reference_jira_connector/
+logs/
+data/
+
+docs/
+
+AGENTS.md
+DEVELOPER_NOTES.md
+INTERNAL_README.md
+HALO_*.md
+
+*.local
+.env
+
+node_modules/
