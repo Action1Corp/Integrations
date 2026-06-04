@@ -690,7 +690,6 @@ data/
 This may include:
 
 * Connector configuration
-* Stored API secrets
 * Ticket correlation state
 * Scheduler state
 * Signal watermarks
