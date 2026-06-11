@@ -95,6 +95,13 @@ The connector maintains ticket correlation state to prevent duplicate ticket cre
 
 # Requirements
 
+## NodeJS
+
+Node.js 24 LTS or later
+Download the Windows Installer from the [official Node.js website](https://nodejs.org/en/download).
+Make sure the selected version is marked as **LTS**.
+
+
 ## Action1
 
 You will need:

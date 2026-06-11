@@ -10,11 +10,14 @@ The connector creates, updates, and manages HaloPSA tickets based on Action1 sig
 
 Before configuring the connector, make sure you have:
 
+* Node.js 24 LTS or later
+  Download the Windows Installer from the [official Node.js website](https://nodejs.org/en/download).
+  Make sure the selected version is marked as **LTS**.
+
 * A HaloPSA instance
 * Access to create or modify HaloPSA API applications
 * An Action1 tenant
 * Action1 API credentials
-* The latest Node.js LTS version installed on the machine where the connector will run. 
 * Network access from the connector host to:
 
   * Action1 API
@@ -690,6 +693,7 @@ data/
 This may include:
 
 * Connector configuration
+* Stored API secrets
 * Ticket correlation state
 * Scheduler state
 * Signal watermarks
