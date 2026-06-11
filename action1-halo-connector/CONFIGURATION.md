@@ -42,6 +42,9 @@ Start the connector:
 ```bash
 npm start
 ```
+The connector startup output will display the local web interface URL.
+
+Make a note of this URL, as you will use it for the initial configuration and later when the connector is running in the background through Windows Task Scheduler.
 
 Open the connector web interface in your browser and complete the initial configuration.
 
@@ -52,6 +55,9 @@ At this stage, verify that:
 * You can save the configuration.
 * Action1 and HaloPSA connection tests succeed.
 * Discovery data loads correctly.
+
+![Creating and Configuring an API Key in Halo](assets/Images/npm_run_start_console.png)
+
 
 ### Manual Foreground Mode
 
@@ -267,6 +273,8 @@ New
 
 at the top right.
 
+![Creating and Configuring an API Key in Halo](assets/Images/Step-1-Register-a-new-Application-Integration.png)
+
 ---
 
 # Step 3: Create and Configure the HaloPSA API Application
@@ -319,6 +327,10 @@ For the **Agent to log in as**, we recommend selecting a HaloPSA **administrator
 Using an administrator account is the quickest way to verify connectivity, discovery, ticket creation, ticket updates, and ticket lifecycle behavior without encountering permission-related issues.
 
 For production environments, you may alternatively create a dedicated integration agent and assign a custom Agent Role with the minimum permissions required by the connector.
+
+![Creating and Configuring an API Key in Halo](assets/Images/Step-2-Creating-and-Configuring-an-API-Key-in-Halo.png)
+
+
 
 ## Why Login Type = Agent?
 
@@ -378,6 +390,8 @@ read:tickets, edit:tickets, read:customers and admin
 3. Select the Save button to confirm your changes.
 
 There is no need to modify the Security tab of the API area. You may skip this part.
+
+![Creating and Configuring an API Key in Halo](assets/Images/Step-3-Enabling-Permissions-to-the-Application-Integration.png)
 
 ---
 
