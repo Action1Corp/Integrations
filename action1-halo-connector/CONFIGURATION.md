@@ -506,6 +506,21 @@ Example:
 | Contoso              | Contoso        |
 | Fabrikam             | Fabrikam       |
 
+
+## Important Note About Changing Existing Organization Mappings
+
+After tickets have already been created, changing an existing Action1 Organization to HaloPSA Client mapping may produce unexpected lifecycle behavior.
+
+The connector keeps local ticket correlation state to prevent duplicate tickets and to update existing tickets safely. If an Action1 Organization is remapped to a different HaloPSA Client after tickets already exist, previously created correlations may still reference tickets created under the original client.
+
+For this release, avoid changing existing organization mappings after the connector has started creating tickets, unless you are intentionally resetting or reviewing the related ticket correlation state.
+
+Recommended practice:
+
+* Configure and verify organization mappings before the first production sync.
+* Do not remap an existing Action1 Organization to a different HaloPSA Client during normal operation.
+* If a remapping is required, review existing connector-created tickets and correlation state before running sync again.
+
 ---
 
 # Step 9: Configure Ticket Routing and Lifecycle Settings
