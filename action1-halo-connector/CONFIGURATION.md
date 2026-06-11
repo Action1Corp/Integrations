@@ -314,17 +314,48 @@ Agent
 
 ## Agent to Log In As
 
-For the Agent to log in as, select a system administrator within your HaloPSA instance.
+For the **Agent to log in as**, we recommend selecting a HaloPSA **administrator account** during the initial deployment and validation of the connector.
 
-Alternatively, you may create a dedicated integration agent and configure the required Agent Role Permissions for that agent.
+Using an administrator account is the quickest way to verify connectivity, discovery, ticket creation, ticket updates, and ticket lifecycle behavior without encountering permission-related issues.
 
-## Why Login Type as Agent?
+For production environments, you may alternatively create a dedicated integration agent and assign a custom Agent Role with the minimum permissions required by the connector.
 
-The connector creates and manages HaloPSA tickets on behalf of a HaloPSA user account. For that reason, the integration should authenticate as an Agent rather than a Vendor or Customer.
+## Why Login Type = Agent?
 
-Using the Agent login type provides access to the ticketing functionality and related entities required by the connector
+The connector creates, updates, and manages HaloPSA tickets on behalf of a HaloPSA user account. For that reason, the integration should authenticate as an **Agent** rather than a Vendor or Customer.
 
-**Important:** The selected agent should have sufficient permissions to create, update, and view tickets, as well as access the HaloPSA clients. For initial deployment, using an administrator account is recommended. Alternatively, you may create a dedicated integration agent with a custom role that grants the required permissions.
+Using the Agent login type provides access to the ticketing functionality, customer records, and related entities required by the connector.
+
+## Minimum Permissions for a Dedicated Integration Agent
+
+If you choose to use a dedicated integration agent instead of an administrator account, the assigned Agent Role should include at least the following permissions.
+
+### Feature Access
+
+| Permission | Value |
+|------------|--------|
+| Tickets Access Level | Read and Modify |
+| Customers Access Level | Read Only |
+
+### Ticket Permissions
+
+| Permission | Value |
+|------------|--------|
+| Can add new Tickets | Yes |
+| Can edit closed Tickets | Yes |
+| Can view Unassigned Tickets | Yes |
+| Can view Tickets that are assigned to other Agents | Yes |
+| Can change a Ticket's Ticket Type | Yes |
+| Can Re-assign Tickets | Yes |
+| Can Edit Advanced Ticket Details | Yes |
+| Can Edit All Actions | Yes |
+| Can Assign To Agents In Teams The Agent Is Not A Member Of | Yes |
+| Can Edit Tickets Which Are Not Assigned To Them | Yes |
+| Can Override Maximum Priority Escalation At Ticket Type Level | Yes |
+| Can Override Ticket Review Processing | Yes |
+| Can Export Tickets | Yes |
+
+> **Important:** If the dedicated integration agent does not have sufficient permissions, the connector may be unable to create, update, close, or query HaloPSA tickets correctly. If you encounter permission-related errors during setup, temporarily testing with an administrator account can help determine whether the issue is caused by role configuration.
 
 ---
 
