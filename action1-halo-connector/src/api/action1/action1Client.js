@@ -73,7 +73,7 @@ function createAction1Client(opts = {}) {
 
     try {
       const connection = await resolveConnection(connectionInput);
-      await listOrganizations({ connection, pageLimit: 1, runId });
+      await probeOrganizationsPage(connection, runId);
       await emitLog({
         runLogger,
         runId,
@@ -100,6 +100,15 @@ function createAction1Client(opts = {}) {
         message: error?.message || "Action1 connection test failed",
       };
     }
+  }
+
+  async function probeOrganizationsPage(connection, runId) {
+    const response = await requestAction1GetWithRateLimitRetry({
+      runId,
+      url: joinUrl(connection.baseUrl, "/organizations"),
+      resolveAccessToken: buildAccessTokenResolver(connection, runId),
+    });
+    validateOrganizationsProbePayload(response?.data);
   }
 
   /**
@@ -756,6 +765,21 @@ function createAction1Client(opts = {}) {
 
   function buildAccessTokenResolver(connection, runId) {
     return async () => getAccessToken(connection, runId);
+  }
+}
+
+function validateOrganizationsProbePayload(payload) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    throw new Error("Action1 organizations response malformed");
+  }
+  if (!Array.isArray(payload.items)) {
+    throw new Error("Action1 organizations response malformed");
+  }
+  for (const item of payload.items) {
+    const normalized = normalizeOrganization(item);
+    if (!normalized.id || !normalized.name) {
+      throw new Error("Action1 organizations response malformed");
+    }
   }
 }
 

@@ -10,6 +10,9 @@
 const { LOG_EVENT_TYPES, emitLog } = require("../../platform/logging");
 const { createHaloAuthClient } = require("./haloAuthClient");
 
+const HALO_CLIENT_DISCOVERY_PAGE_SIZE = 50;
+const HALO_CLIENT_DISCOVERY_PAGE_LIMIT = 50;
+
 /**
  * @param {{
  *  runLogger?: any,
@@ -148,12 +151,13 @@ function createHaloDiscoveryClient(opts = {}) {
         endpoint: "/Client",
       },
     });
-    const payload = await fetchResourceList({
+    const rows = await fetchPaginatedClientList({
       runId: "halo-discovery",
       path: "/Client",
       resource: "clients",
+      pageSize: HALO_CLIENT_DISCOVERY_PAGE_SIZE,
+      pageLimit: HALO_CLIENT_DISCOVERY_PAGE_LIMIT,
     });
-    const rows = payload.map(normalizeClient).filter(hasIdName);
     await emitLog({
       runLogger,
       runId: "halo-discovery",
@@ -220,6 +224,147 @@ function createHaloDiscoveryClient(opts = {}) {
       },
     });
     return rows;
+  }
+
+  async function fetchPaginatedClientList({ runId, path, resource, pageSize, pageLimit }) {
+    const startedAtMs = Date.now();
+    const collected = [];
+    const seenIds = new Set();
+    const seenPageSignatures = new Set();
+    let totalCount = null;
+    let pagesFetched = 0;
+    let rootShape = "unknown";
+    let terminationReason = "unknown";
+
+    await emitLog({
+      runLogger,
+      runId,
+      eventType: LOG_EVENT_TYPES.DISCOVERY_FETCH,
+      message: `Halo discovery fetch ${resource} started`,
+      context: {
+        endpoint: path,
+        pageSize,
+        pageLimit,
+      },
+    });
+
+    for (let pageNo = 1; pageNo <= pageLimit; pageNo += 1) {
+      const nextPath = `${path}?pageinate=true&page_no=${pageNo}&page_size=${pageSize}`;
+      const response = await authClient.requestResource({
+        method: "GET",
+        path: nextPath,
+        runId,
+      });
+      pagesFetched += 1;
+      rootShape = detectRootShape(response.data);
+
+      const payload = response.data && typeof response.data === "object" ? response.data : null;
+      const pageRows = toArray(response.data);
+      if (!hasPaginatedClientMetadata(payload)) {
+        const legacyRows = dedupeFirstSeenRows(pageRows, normalizeClient);
+        terminationReason = "legacy_single_page";
+        await emitLog({
+          runLogger,
+          runId,
+          eventType: LOG_EVENT_TYPES.DISCOVERY_FETCH,
+          message: `Halo discovery fetch ${resource} completed`,
+          context: {
+            count: legacyRows.length,
+            endpoint: path,
+            rootShape,
+            pagesFetched,
+            pageSizeRequested: pageSize,
+            totalRecordCount: null,
+            terminationReason,
+            durationMs: Math.max(0, Date.now() - startedAtMs),
+          },
+        });
+        return legacyRows;
+      }
+
+      const metadata = validatePaginatedClientMetadata(payload, pageNo, pageSize, resource);
+      totalCount = metadata.recordCount;
+
+      const normalizedPageRows = pageRows.map(normalizeClient).filter(hasIdName);
+      const pageSignature = normalizedPageRows.map((row) => row.id).join("|");
+      if (pageSignature && seenPageSignatures.has(pageSignature)) {
+        throw new Error(`Halo ${resource} repeated page detected at page ${pageNo}`);
+      }
+      if (pageSignature) {
+        seenPageSignatures.add(pageSignature);
+      }
+
+      let newIdsThisPage = 0;
+      for (const row of normalizedPageRows) {
+        if (seenIds.has(row.id)) continue;
+        seenIds.add(row.id);
+        collected.push(row);
+        newIdsThisPage += 1;
+      }
+
+      await emitLog({
+        runLogger,
+        runId,
+        eventType: LOG_EVENT_TYPES.DISCOVERY_FETCH,
+        message: `Halo discovery fetch ${resource} page`,
+        context: {
+          endpoint: path,
+          pageNo,
+          pageSizeRequested: pageSize,
+          pageSizeReturned: metadata.pageSize,
+          returnedRowCount: pageRows.length,
+          totalRecordCount: totalCount,
+          uniqueCollected: collected.length,
+        },
+      });
+
+      if (totalCount === 0) {
+        if (pageRows.length > 0) {
+          throw new Error(`Halo ${resource} pagination metadata invalid: record_count=0 with returned rows`);
+        }
+        terminationReason = "empty_total";
+        break;
+      }
+
+      if (collected.length > totalCount) {
+        throw new Error(`Halo ${resource} pagination metadata invalid: collected more rows than record_count`);
+      }
+
+      if (collected.length === totalCount) {
+        terminationReason = "record_count_reached";
+        break;
+      }
+
+      if (pageRows.length === 0) {
+        throw new Error(`Halo ${resource} pagination ended before reaching record_count ${totalCount}`);
+      }
+
+      if (newIdsThisPage === 0) {
+        throw new Error(`Halo ${resource} pagination made no progress at page ${pageNo}`);
+      }
+    }
+
+    if (terminationReason === "unknown") {
+      throw new Error(`Halo ${resource} paging exceeded limit ${pageLimit}`);
+    }
+
+    await emitLog({
+      runLogger,
+      runId,
+      eventType: LOG_EVENT_TYPES.DISCOVERY_FETCH,
+      message: `Halo discovery fetch ${resource} completed`,
+      context: {
+        count: collected.length,
+        endpoint: path,
+        rootShape,
+        pagesFetched,
+        pageSizeRequested: pageSize,
+        totalRecordCount: totalCount,
+        terminationReason,
+        durationMs: Math.max(0, Date.now() - startedAtMs),
+      },
+    });
+    return collected;
   }
 }
 
@@ -316,6 +461,51 @@ function dedupeByIdName(rows) {
 
 function hasIdName(row) {
   return Boolean(row?.id && row?.name);
+}
+
+function hasPaginatedClientMetadata(payload) {
+  return Boolean(
+    payload &&
+      typeof payload === "object" &&
+      Object.prototype.hasOwnProperty.call(payload, "page_no") &&
+      Object.prototype.hasOwnProperty.call(payload, "page_size") &&
+      Object.prototype.hasOwnProperty.call(payload, "record_count")
+  );
+}
+
+function validatePaginatedClientMetadata(payload, expectedPageNo, expectedPageSize, resource) {
+  const pageNo = Number(payload?.page_no);
+  const pageSize = Number(payload?.page_size);
+  const recordCount = Number(payload?.record_count);
+
+  if (!Number.isInteger(pageNo) || pageNo < 1 || pageNo !== expectedPageNo) {
+    throw new Error(`Halo ${resource} pagination metadata invalid: unexpected page_no`);
+  }
+  if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize !== expectedPageSize) {
+    throw new Error(`Halo ${resource} pagination metadata invalid: unexpected page_size`);
+  }
+  if (!Number.isInteger(recordCount) || recordCount < 0) {
+    throw new Error(`Halo ${resource} pagination metadata invalid: unexpected record_count`);
+  }
+
+  return {
+    pageNo,
+    pageSize,
+    recordCount,
+  };
+}
+
+function dedupeFirstSeenRows(rows, normalizeItem) {
+  const out = [];
+  const seenIds = new Set();
+  for (const row of rows || []) {
+    const normalized = normalizeItem(row);
+    if (!hasIdName(normalized)) continue;
+    if (seenIds.has(normalized.id)) continue;
+    seenIds.add(normalized.id);
+    out.push(normalized);
+  }
+  return out;
 }
 
 function toObject(value) {
