@@ -10,15 +10,31 @@
 (function () {
   const ACTION1_REGION_OPTIONS = Object.freeze([
     {
-      label: "Global / North America (https://app.action1.com/api/3.0)",
+      label: "North America",
       baseUrl: "https://app.action1.com/api/3.0",
     },
     {
-      label: "Europe (https://app.eu.action1.com/api/3.0)",
+      label: "North America 2",
+      baseUrl: "https://app.na-2.action1.com/api/3.0",
+    },
+    {
+      label: "North America 3",
+      baseUrl: "https://app.na-3.action1.com/api/3.0",
+    },
+    {
+      label: "Europe",
       baseUrl: "https://app.eu.action1.com/api/3.0",
     },
     {
-      label: "Australia (https://app.au.action1.com/api/3.0)",
+      label: "Europe 2",
+      baseUrl: "https://app.eu-2.action1.com/api/3.0",
+    },
+    {
+      label: "United Kingdom",
+      baseUrl: "https://app.uk.action1.com/api/3.0",
+    },
+    {
+      label: "Australia",
       baseUrl: "https://app.au.action1.com/api/3.0",
     },
   ]);
